@@ -1,4 +1,5 @@
 import os
+import asyncio
 from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -44,15 +45,22 @@ app.include_router(session.router, prefix="/api/session", tags=["session"])
 app.include_router(recommend.router, prefix="/api/recommend", tags=["recommend"])
 
 
+async def _async_probe_bg():
+    try:
+        ok, detail = await probe_openai()
+        logger.info("llm_probe", ok=ok, detail=detail)
+    except Exception as e:
+        logger.warning("llm_probe_failed", error=str(e))
+
+
 @app.on_event("startup")
 async def startup():
     cfg = get_config()
     logger.info("signal_starting", key_prefix=repr(cfg.OPENAI_API_KEY)[:14], provider=cfg.LLM_PROVIDER)
     await seed_db()
 
-    ok, detail = await probe_openai()
-    logger.info("llm_probe", ok=ok, detail=detail)
-
+    # Run OpenAI probe in background so startup returns instantly and Uvicorn binds $PORT immediately
+    asyncio.create_task(_async_probe_bg())
     logger.info("signal_ready")
 
 
