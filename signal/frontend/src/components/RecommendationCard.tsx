@@ -4,7 +4,7 @@ import { useStore } from '../store';
 import type { Recommendation } from '../store';
 
 export default function RecommendationCard() {
-  const { recommendation, isStreaming, isOffline, fullTrace } = useStore();
+  const { recommendation, serendipity, isStreaming, isOffline, fullTrace } = useStore();
   const [showTrace, setShowTrace] = useState(false);
 
   if (!recommendation && !isStreaming) {
@@ -52,6 +52,7 @@ export default function RecommendationCard() {
   if (!recommendation) return null;
 
   const specPairs = parseFormattedBlock(recommendation.formatted_block, recommendation);
+  const zeroSignalNote = (recommendation as any).zero_signal_note;
 
   return (
     <div
@@ -71,21 +72,30 @@ export default function RecommendationCard() {
       }}
     >
       {/* Panel Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-        <span className="panel-heading">
-          Recommendation
-        </span>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          <span className="tag-chip">
-            {recommendation.confidence} Confidence
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span className="panel-heading">
+            Recommendation
           </span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--bone-dim)' }}>
-            {isOffline ? 'offline' : 'gpt'}
-          </span>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <span className="tag-chip">
+              {recommendation.confidence} Confidence
+            </span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--bone-dim)' }}>
+              {isOffline ? 'offline' : 'gpt'}
+            </span>
+          </div>
         </div>
+
+        {/* Zero Signal Notice (Part 2) */}
+        {zeroSignalNote && (
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--bone-dim)' }}>
+            {zeroSignalNote}
+          </div>
+        )}
       </div>
 
-      {/* Title: 26px Space Grotesk Word-by-Word Reveal (Part 3 S7) */}
+      {/* Title: 26px Space Grotesk Word-by-Word Reveal */}
       <div>
         <AnimatedTitle title={recommendation.title} />
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 4 }}>
@@ -103,7 +113,7 @@ export default function RecommendationCard() {
         </div>
       </div>
 
-      {/* 2-Column Mono Grid Output Block with Character Typing (Part 3 S7) */}
+      {/* 2-Column Mono Grid Output Block */}
       <dl className="spec-grid" id="recommendation-output-block">
         {specPairs.map(({ label, value }) => (
           <React.Fragment key={label}>
@@ -118,6 +128,34 @@ export default function RecommendationCard() {
           </React.Fragment>
         ))}
       </dl>
+
+      {/* Serendipity Pick (Part 3) */}
+      {serendipity && (
+        <div
+          id="serendipity-recommendation"
+          style={{
+            marginTop: 4,
+            paddingTop: 10,
+            borderTop: '1px solid var(--grid)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 4,
+          }}
+        >
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--signal)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            ALSO WORTH 60 SECONDS · exploration
+          </div>
+          <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 15, color: 'var(--bone)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>{serendipity.title}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--bone-dim)' }}>
+              {serendipity.category} · {serendipity.difficulty}
+            </span>
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--bone-dim)' }}>
+            {serendipity.why_recommendation || '↳ outside your current interests, adjacent to backend engineering'}
+          </div>
+        </div>
+      )}
 
       {/* Open Reasoning Trace Toggle */}
       <div>

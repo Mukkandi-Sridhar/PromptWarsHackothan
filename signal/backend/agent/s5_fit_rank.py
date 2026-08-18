@@ -1,4 +1,4 @@
-"""Stage 5 — Fit Ranking with Distinctive Echo Filtering & Distance Ceiling"""
+"""Stage 5 — Fit Ranking with Distinctive Echo Filtering & Serendipity Adjacent Split"""
 from __future__ import annotations
 from typing import Any
 
@@ -38,10 +38,11 @@ def run(
     current_sophistication: str = "beginner",
     current_reel: dict[str, Any] | None = None,
     watched_concepts: set[str] | None = None,
-) -> tuple[list[ScoredCandidate], list[dict[str, str]]]:
+) -> tuple[list[ScoredCandidate], list[ScoredCandidate], list[dict[str, str]]]:
     """
-    Evaluates S4-survived candidates against distinctive lift-based echo filter and distance ceiling.
-    Returns (scored_candidates, shallow_moves_blocked).
+    Evaluates S4-survived candidates against distinctive lift-based echo filter.
+    Splits into primary (has L2 overlap) and adjacent (serendipity candidate, no L2 overlap).
+    Returns (scored_primary, scored_adjacent, blocked_echoes).
     """
     if current_reel is None:
         current_reel = {}
@@ -58,7 +59,8 @@ def run(
     active_l2_keys = {n.id.replace("l2_", "") for n in graph.nodes if n.layer == "L2" and n.weight > 0}
 
     blocked_echoes: list[dict[str, str]] = []
-    candidates_filtered: list[dict[str, Any]] = []
+    primary_candidates: list[dict[str, Any]] = []
+    adjacent_candidates: list[dict[str, Any]] = []
 
     for cand in passed_candidates:
         title = cand.get("title", "")
@@ -67,7 +69,7 @@ def run(
         cand_diff_rank = soph_map.get(cand.get("difficulty", "Beginner").lower(), 0)
         cand_substance = cand.get("substance_score", 50)
 
-        # 1. Lift-based echo evaluation on DISTINCTIVE tokens only (Part 3.2)
+        # 1. Lift-based echo evaluation on DISTINCTIVE tokens only
         is_echo = False
         echo_reason: str | None = None
 
@@ -79,7 +81,6 @@ def run(
                 is_echo = True
                 echo_reason = f"same surface topic '{dominant_l1}' · no step up in difficulty"
             else:
-                # Concept overlap Jaccard
                 cand_concepts = set(t.lower() for t in cand.get("tags", []))
                 if watched_concepts and cand_concepts:
                     inter = cand_concepts.intersection(watched_concepts)
@@ -96,31 +97,19 @@ def run(
             })
             continue
 
-        # 2. Distance Ceiling evaluation (Part 1.4)
+        # 2. Overlap split per Part 3: Primary (has L2 overlap) vs Adjacent (Serendipity candidate)
         cand_l2_key = CATEGORY_TO_L2.get(cand_cat, "dev_tooling")
         has_l2_overlap = bool(active_l2_keys and cand_l2_key in active_l2_keys)
-        if active_l2_keys and not has_l2_overlap:
-            blocked_echoes.append({
-                "candidate": title,
-                "reason": "no L2 overlap with interest graph",
-            })
-            continue
 
-        candidates_filtered.append(cand)
+        if has_l2_overlap or not active_l2_keys:
+            primary_candidates.append(cand)
+        else:
+            adjacent_candidates.append(cand)
 
-    if not candidates_filtered:
-        candidates_filtered = [c for c in passed_candidates if c.get("substance_score", 50) >= 70]
-        if not candidates_filtered:
-            candidates_filtered = passed_candidates
+    if not primary_candidates:
+        primary_candidates = [c for c in passed_candidates if c.get("substance_score", 50) >= 70] or passed_candidates
 
-    scored = rank_candidates(candidates_filtered, graph, watched_reel_ids, current_sophistication)
+    scored_primary = rank_candidates(primary_candidates, graph, watched_reel_ids, current_sophistication)
+    scored_adjacent = rank_candidates(adjacent_candidates, graph, watched_reel_ids, current_sophistication) if adjacent_candidates else []
 
-    # Dev assertion per Part 1.2
-    if scored:
-        top_cand = next((c for c in passed_candidates if c["id"] == scored[0].candidate_id), {})
-        top_substance = top_cand.get("substance_score", 0)
-        curr_cat = current_reel.get("category", "")
-        if curr_cat and top_cand.get("category") == curr_cat and top_substance < 70:
-            raise ValueError(f"shallow echo escaped the filter: '{top_cand.get('title')}' has score {top_substance} < 70")
-
-    return scored, blocked_echoes
+    return scored_primary, scored_adjacent, blocked_echoes

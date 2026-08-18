@@ -69,6 +69,7 @@ export interface Recommendation {
   creator_handle: string;
   hook_style: string;
   substance_score: number;
+  zero_signal_note?: string;
 }
 
 export interface AgentStage {

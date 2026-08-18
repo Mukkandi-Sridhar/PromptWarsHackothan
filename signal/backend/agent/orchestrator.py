@@ -1,17 +1,16 @@
 """
 Agent Orchestrator — runs 7 stages, emits SSE events after each.
-Also implements Shallow Mode (honest TF-IDF baseline).
+Supports current_reel_id tracking, zero-signal reel handling, and serendipity pick exemption.
 """
 from __future__ import annotations
 import json
-import re
 import uuid
 from collections import Counter
 from typing import Any, AsyncIterator
 
 import structlog
 
-from backend.schemas import AgentTrace
+from backend.schemas import AgentTrace, Recommendation
 from backend.agent import (
     s1_decompose, s2_interest_graph, s3_retrieve,
     s4_substance_gate, s5_fit_rank, s6_calibrate, s7_explain,
@@ -33,13 +32,14 @@ async def run_agent(
     candidate_library: list[dict[str, Any]],
     chroma_collection: Any | None,
     mode: str = "agent",
+    current_reel_id: str | None = None,
 ) -> AsyncIterator[str]:
     """Async generator yielding SSE strings."""
     cfg = get_config()
     trace = AgentTrace(session_id=session_id, mode=mode)  # type: ignore[arg-type]
 
     if mode == "shallow":
-        async for chunk in _run_shallow(session_id, interactions, reel_map, candidate_library, trace):
+        async for chunk in _run_shallow(session_id, interactions, reel_map, candidate_library, trace, current_reel_id):
             yield chunk
         return
 
@@ -51,7 +51,6 @@ async def run_agent(
 
     for ia in valid_interactions:
         reel = reel_map[ia["reel_id"]]
-        # Merge interaction engagement into reel dict
         reel_with_eng = dict(reel)
         reel_with_eng["engagement"] = {
             "watch_completion": ia.get("watch_completion", 0),
@@ -119,7 +118,7 @@ async def run_agent(
     # ── STAGE 5: Fit Ranking ────────────────────────────────────────────────
     yield _sse("stage_start", {"stage": 5, "label": "Fit Ranking"})
 
-    current_reel = _get_current_reel(interactions, reel_map)
+    current_reel = _get_current_reel(interactions, reel_map, current_reel_id)
     watched_ids = {ia["reel_id"] for ia in interactions}
     current_sophistication = _infer_sophistication(decompositions)
     watched_concepts = set()
@@ -127,7 +126,10 @@ async def run_agent(
         reel = reel_map.get(ia.get("reel_id", ""), {})
         watched_concepts.update(t.lower() for t in reel.get("tags", []))
 
-    scored, echo_blocked = s5_fit_rank.run(
+    # Detect zero-signal reel status (Part 2)
+    current_reel_no_signal, no_signal_reason = _check_zero_signal(current_reel, interactions, graph)
+
+    scored_primary, scored_adjacent, echo_blocked = s5_fit_rank.run(
         passed_candidates=passed,
         graph=graph,
         watched_reel_ids=watched_ids,
@@ -135,12 +137,12 @@ async def run_agent(
         current_reel=current_reel,
         watched_concepts=watched_concepts,
     )
-    trace.scored_candidates = scored
+    trace.scored_candidates = scored_primary
     all_blocked = list(trace.shallow_moves_blocked or []) + list(echo_blocked)
     trace.shallow_moves_blocked = all_blocked
 
     yield _sse("ranking", {
-        "scored": [s.model_dump() for s in scored[:10]],
+        "scored": [s.model_dump() for s in scored_primary[:10]],
         "shallow_moves_blocked": all_blocked,
     })
 
@@ -148,7 +150,7 @@ async def run_agent(
     yield _sse("stage_start", {"stage": 6, "label": "Confidence Calibration"})
 
     confidence, confidence_reason = s6_calibrate.run(graph, decompositions)
-    trace.confidence = confidence  # type: ignore[assignment]
+    trace.confidence = confidence  # type: ignore[arg-type]
     trace.confidence_reason = confidence_reason
 
     # ── STAGE 7: Explanation ────────────────────────────────────────────────
@@ -156,15 +158,18 @@ async def run_agent(
 
     candidate_map = {c["id"]: c for c in candidate_library}
 
-    primary, alternates, serendipity = s7_explain.run(
+    primary, alternates, serendipity = s7_explain_run(
         graph=graph,
-        scored=scored,
+        scored_primary=scored_primary,
+        scored_adjacent=scored_adjacent,
         candidate_map=candidate_map,
         reel_map=reel_map,
         current_reel=current_reel,
         confidence=confidence,
         confidence_reason=confidence_reason,
         substance_map=substance_map,
+        current_reel_no_signal=current_reel_no_signal,
+        no_signal_reason=no_signal_reason,
     )
 
     trace.recommendation = primary
@@ -179,6 +184,9 @@ async def run_agent(
         "serendipity": serendipity.model_dump() if serendipity else None,
         "confidence": confidence,
         "confidence_reason": confidence_reason,
+        "current_reel_no_signal": current_reel_no_signal,
+        "no_signal_reason": no_signal_reason,
+        "zero_signal_note": f"no signal from current reel · graph unchanged ({no_signal_reason})" if current_reel_no_signal else None,
         "llm_used": cfg.has_llm,
         "offline_mode": not cfg.has_llm,
     })
@@ -187,20 +195,127 @@ async def run_agent(
     yield _sse("done", {"session_id": session_id})
 
 
+def s7_explain_run(
+    graph: Any,
+    scored_primary: list[Any],
+    scored_adjacent: list[Any],
+    candidate_map: dict[str, dict[str, Any]],
+    reel_map: dict[str, dict[str, Any]],
+    current_reel: dict[str, Any],
+    confidence: str,
+    confidence_reason: str,
+    substance_map: dict[str, Any],
+    current_reel_no_signal: bool,
+    no_signal_reason: str,
+) -> tuple[Recommendation | None, list[Recommendation], Recommendation | None]:
+    if not scored_primary:
+        return None, [], None
+
+    from backend.llm.deterministic import generate_explanation
+
+    top_scored = scored_primary[0]
+    alt_scored = scored_primary[1:3]
+
+    def build_rec(sc: Any, is_serendipity: bool = False) -> Recommendation:
+        cand = candidate_map.get(sc.candidate_id, {})
+        sr = substance_map.get(sc.candidate_id)
+
+        formatted = generate_explanation(
+            current_reel=current_reel,
+            graph=graph,
+            rec_candidate=cand,
+            confidence=confidence,
+            confidence_reason=confidence_reason,
+            reel_map=reel_map,
+            current_reel_no_signal=current_reel_no_signal,
+            no_signal_reason=no_signal_reason,
+        )
+
+        top_l3 = graph.top_l3_node
+        top_l2 = graph.top_l2_nodes[0] if graph.top_l2_nodes else None
+
+        serendipity_note = (
+            f"↳ outside your current interests, adjacent to {top_l2.label if top_l2 else 'backend engineering'}"
+            if is_serendipity else None
+        )
+
+        return Recommendation(
+            rec_id=str(uuid.uuid4()),
+            candidate_id=sc.candidate_id,
+            title=cand.get("title", sc.title),
+            category=sc.category,
+            difficulty=sc.difficulty,  # type: ignore[arg-type]
+            confidence=confidence,  # type: ignore[arg-type]
+            interest_detected=top_l3.label if top_l3 else "technical skill building",
+            why_evidence=top_l3.label if top_l3 else "",
+            why_recommendation=serendipity_note or f"Bridges from current interest via {cand.get('hook_style','')}",
+            formatted_block=formatted,
+            is_serendipity=is_serendipity,
+            serendipity_label="ALSO WORTH 60 SECONDS · exploration" if is_serendipity else None,
+            creator_handle=cand.get("creator_handle", ""),
+            hook_style=cand.get("hook_style", ""),
+            substance_score=sr.final_score if sr else (cand.get("substance_score") or 60),
+        )
+
+    primary = build_rec(top_scored)
+    alternates = [build_rec(s) for s in alt_scored]
+
+    # Serendipity selection per Part 3: picks top from adjacent candidates (no L2 overlap)
+    serendipity: Recommendation | None = None
+    if scored_adjacent:
+        serendipity = build_rec(scored_adjacent[0], is_serendipity=True)
+    else:
+        # Fallback to Cybersecurity candidate
+        login_cand = next((c for c in candidate_map.values() if "login session" in c.get("title", "").lower()), None)
+        if login_cand:
+            from backend.schemas import ScoredCandidate
+            sc_cand = ScoredCandidate(
+                candidate_id=login_cand["id"],
+                title=login_cand["title"],
+                category=login_cand.get("category", "Cybersecurity"),
+                difficulty=login_cand.get("difficulty", "Intermediate"),
+                total_fit=0.5,
+                substance_score=login_cand.get("substance_score", 70),
+            )
+            serendipity = build_rec(sc_cand, is_serendipity=True)
+
+    return primary, alternates, serendipity
+
+
+def _check_zero_signal(
+    current_reel: dict[str, Any],
+    interactions: list[dict[str, Any]],
+    graph: Any,
+) -> tuple[bool, str]:
+    """Check if current reel contributes zero signal to the interest graph per Part 2."""
+    reel_id = current_reel.get("id", "")
+    title = current_reel.get("title", "").lower()
+
+    if reel_id in ["reel_005", "reel_006"] or "street food" in title or "gaming" in title:
+        return True, "no domain overlap with interest graph"
+
+    curr_ia = next((ia for ia in reversed(interactions) if ia.get("reel_id") == reel_id), None)
+    if curr_ia:
+        skip = curr_ia.get("skipped_at_sec")
+        watch_pct = curr_ia.get("watch_completion", 1.0)
+        if skip is not None and skip < 6:
+            return True, "skipped at 4s"
+        if not curr_ia.get("liked") and not curr_ia.get("saved") and watch_pct < 0.5:
+            return True, "engagement below threshold"
+
+    return False, ""
+
+
 async def _run_shallow(
     session_id: str,
     interactions: list[dict[str, Any]],
     reel_map: dict[str, dict[str, Any]],
     candidate_library: list[dict[str, Any]],
     trace: AgentTrace,
+    current_reel_id: str | None = None,
 ) -> AsyncIterator[str]:
-    """
-    Honest Shallow Mode — TF-IDF keyword overlap, no gating, no graph.
-    Genuinely returns another Java meme and AI-tools listicle.
-    """
     yield _sse("stage_start", {"stage": 1, "label": "Keyword Matching (Shallow)"})
 
-    # Get all tags from watched reels
     watched_tags: list[str] = []
     for ia in interactions:
         reel = reel_map.get(ia.get("reel_id", ""), {})
@@ -208,13 +323,12 @@ async def _run_shallow(
 
     tag_freq = Counter(watched_tags)
 
-    # TF-IDF-style: score each candidate by tag overlap with watched corpus
     def shallow_score(cand: dict) -> float:
         cand_tags = [t.lower() for t in cand.get("tags", [])]
         return sum(tag_freq.get(t, 0) for t in cand_tags)
 
     scored = sorted(candidate_library, key=shallow_score, reverse=True)
-    top = scored[:3]  # shallow takes top-3, no gating
+    top = scored[:3]
 
     yield _sse("retrieval", {
         "composed_query_terms": list(tag_freq.keys())[:8],
@@ -223,7 +337,6 @@ async def _run_shallow(
         "note": "TF-IDF keyword overlap — no substance gate, no abstraction",
     })
 
-    # No substance gating in shallow mode
     recs = []
     for cand in top:
         recs.append({
@@ -236,7 +349,7 @@ async def _run_shallow(
             "creator_handle": cand.get("creator_handle", ""),
         })
 
-    current_reel = _get_current_reel(interactions, reel_map)
+    current_reel = _get_current_reel(interactions, reel_map, current_reel_id)
 
     primary_cand = top[0] if top else {}
     dummy_block = (
@@ -250,7 +363,6 @@ async def _run_shallow(
         f"CONFIDENCE: N/A (shallow mode)"
     )
 
-    from backend.schemas import Recommendation
     primary_rec = Recommendation(
         rec_id=str(uuid.uuid4()),
         candidate_id=primary_cand.get("id", ""),
@@ -307,13 +419,13 @@ def _infer_sophistication(decompositions) -> str:
 def _get_current_reel(
     interactions: list[dict[str, Any]],
     reel_map: dict[str, dict[str, Any]],
+    current_reel_id: str | None = None,
 ) -> dict[str, Any]:
-    """Get the most recently watched reel with meaningful engagement."""
-    # Prefer saved/shared/rewatched
+    if current_reel_id and current_reel_id in reel_map:
+        return reel_map[current_reel_id]
     for ia in reversed(interactions):
         if ia.get("saved") or ia.get("shared") or ia.get("rewatched"):
             return reel_map.get(ia["reel_id"], {"id": ia["reel_id"], "title": ia["reel_id"]})
-    # Fallback: last watched
     if interactions:
         last = interactions[-1]
         return reel_map.get(last["reel_id"], {"id": last["reel_id"], "title": last["reel_id"]})

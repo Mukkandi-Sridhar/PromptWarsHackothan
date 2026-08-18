@@ -38,7 +38,7 @@ def _build_reel_map():
 
 
 @router.get("/stream")
-async def recommend_stream(request: Request, session_id: str, mode: str = "agent"):
+async def recommend_stream(request: Request, session_id: str, mode: str = "agent", current_reel_id: str | None = None):
     async def generate():
         async with AsyncSessionLocal() as db:
             result = await db.execute(
@@ -77,6 +77,7 @@ async def recommend_stream(request: Request, session_id: str, mode: str = "agent
             candidate_library=candidates,
             chroma_collection=chroma,
             mode=mode,
+            current_reel_id=current_reel_id,
         ):
             # Check if client disconnected
             if await request.is_disconnected():

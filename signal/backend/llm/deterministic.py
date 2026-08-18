@@ -635,6 +635,8 @@ def generate_explanation(
     confidence: str,
     confidence_reason: str,
     reel_map: dict[str, dict[str, Any]],
+    current_reel_no_signal: bool = False,
+    no_signal_reason: str = "engagement below threshold",
 ) -> str:
     top_l3 = graph.top_l3_node
     top_l2 = graph.top_l2_nodes[0] if graph.top_l2_nodes else None
@@ -653,6 +655,14 @@ def generate_explanation(
     count = len(evidence_reel_ids)
     signal_str = pluralize(count, "converging signal", "converging signals")
 
+    if current_reel_no_signal:
+        why_line = (
+            f"Current reel contributed no signal — {no_signal_reason}. "
+            f"Interest graph unchanged; recommendation continues from {pluralize(count, 'converging reel', 'converging reels')}."
+        )
+    else:
+        why_line = f"Evidence from {evidence_str} with {signal_str} across identity affirmation, aspiration, and anxiety relief intents"
+
     # Bridge rationale
     hook_style = rec_candidate.get("hook_style", "")
     diff = rec_candidate.get("difficulty", "Beginner")
@@ -665,7 +675,7 @@ def generate_explanation(
     block = (
         f"CURRENT REEL: {current_reel.get('title', current_reel.get('id', 'unknown'))}\n"
         f"INTEREST DETECTED: {l3_label}, expressed as {l2_label}\n"
-        f"WHY: Evidence from {evidence_str} with {signal_str} across identity affirmation, aspiration, and anxiety relief intents\n"
+        f"WHY: {why_line}\n"
         f"RECOMMENDED TECH REEL: {rec_candidate.get('title', '')}\n"
         f"CATEGORY: {rec_candidate.get('category', 'Other')}\n"
         f"WHY THIS RECOMMENDATION: {bridge_note}\n"

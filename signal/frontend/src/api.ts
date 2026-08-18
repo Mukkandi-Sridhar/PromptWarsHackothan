@@ -48,8 +48,12 @@ export function createSSEStream(
   onEvent: (event: string, data: unknown) => void,
   onDone: () => void,
   onError: (err: string) => void,
+  currentReelId?: string,
 ): () => void {
-  const url = `${API}/recommend/stream?session_id=${sessionId}&mode=${mode}`;
+  let url = `${API}/recommend/stream?session_id=${sessionId}&mode=${mode}`;
+  if (currentReelId) {
+    url += `&current_reel_id=${encodeURIComponent(currentReelId)}`;
+  }
   const es = new EventSource(url);
 
   const events = [
