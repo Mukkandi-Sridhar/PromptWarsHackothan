@@ -672,8 +672,9 @@ def generate_explanation(
         f"{diff} level — one step above current demonstrated sophistication."
     )
 
+    curr_title = str(current_reel.get('title', current_reel.get('id', 'unknown'))).replace('\n', ' ').strip()
     block = (
-        f"CURRENT REEL: {current_reel.get('title', current_reel.get('id', 'unknown'))}\n"
+        f"CURRENT REEL: {curr_title}\n"
         f"INTEREST DETECTED: {l3_label}, expressed as {l2_label}\n"
         f"WHY: {why_line}\n"
         f"RECOMMENDED TECH REEL: {rec_candidate.get('title', '')}\n"

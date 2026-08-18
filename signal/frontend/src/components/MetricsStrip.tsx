@@ -9,7 +9,7 @@ export default function MetricsStrip() {
   const distinctAnalyzedCount = Math.min(Math.max(Object.keys(interactions).length, currentReelIdx + 1), 8);
 
   const topInterestFull = topL3?.label || '';
-  const topInterestDisplay = topInterestFull ? 'Software Eng' : '—';
+  const topInterestDisplay = topInterestFull ? 'SWE Career' : '—';
 
   const substanceScore = recommendation?.substance_score ?? null;
   const hypeBlockedCount = rejectedCandidates.length;

@@ -29,6 +29,21 @@ def _content_hash(prompt: str, schema_name: str) -> str:
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
+def _prepare_json_schema(schema: Type[BaseModel]) -> dict[str, Any]:
+    s = schema.model_json_schema()
+    def _add_no_extra(d: Any):
+        if isinstance(d, dict):
+            if d.get("type") == "object" or "properties" in d:
+                d["additionalProperties"] = False
+            for v in d.values():
+                _add_no_extra(v)
+        elif isinstance(d, list):
+            for item in d:
+                _add_no_extra(item)
+    _add_no_extra(s)
+    return s
+
+
 async def probe_openai() -> tuple[bool, str]:
     cfg = get_config()
     if not cfg.OPENAI_API_KEY:
@@ -85,7 +100,7 @@ async def call_structured_async(
                 "json_schema": {
                     "name": schema.__name__,
                     "strict": True,
-                    "schema": schema.model_json_schema(),
+                    "schema": _prepare_json_schema(schema),
                 },
             },
             timeout=20,
@@ -117,7 +132,7 @@ def call_structured(
     temperature: float = 0.2,
     use_strong_model: bool = False,
 ) -> T | None:
-    """Sync helper returning validated model or None on fallback."""
+    """Sync helper returning validated model or None on fallback using json_schema strict mode."""
     cfg = get_config()
     if not cfg.has_llm:
         return None
@@ -142,12 +157,18 @@ def call_structured(
             messages=messages,
             temperature=temperature,
             max_tokens=2048,
-            response_format={"type": "json_object"},
+            response_format={
+                "type": "json_schema",
+                "json_schema": {
+                    "name": schema.__name__,
+                    "strict": True,
+                    "schema": _prepare_json_schema(schema),
+                },
+            },
         )
         content = resp.choices[0].message.content
         if content:
-            parsed = json.loads(content)
-            model = schema.model_validate(parsed)
+            model = schema.model_validate_json(content)
             _cache[cache_key] = model.model_dump_json()
             return model
     except Exception as e:
