@@ -322,15 +322,7 @@ export default function App() {
       </motion.header>
 
       {/* ── MIDDLE APP SHELL ── */}
-      <main
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '340px 1fr',
-          height: '100%',
-          minHeight: 0,
-          overflow: 'hidden',
-        }}
-      >
+      <main className="main-grid">
         {/* Left Column: Phone Feed (Part 7 entrance delay 80ms) */}
         <motion.section
           initial={{ opacity: 0, scale: 0.98 }}
