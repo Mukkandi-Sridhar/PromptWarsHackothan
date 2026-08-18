@@ -63,7 +63,7 @@ export default function AbstractionLadder() {
       }}
     >
       {/* Upper Content Area */}
-      <div style={{ flex: 1, padding: 12, display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden' }}>
+      <div style={{ flex: 1, padding: 12, display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}>
         {/* Panel Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <span className="panel-heading">
@@ -85,12 +85,13 @@ export default function AbstractionLadder() {
           )}
         </div>
 
-        {/* 3 Tiers Layout (18px tier gap per Spec 3.4) */}
+        {/* 3 Tiers Layout */}
         <div
           style={{
             flex: 1,
             display: 'flex',
             flexDirection: 'column',
+            gap: 10,
             justifyContent: 'space-between',
             position: 'relative',
             paddingLeft: 32,

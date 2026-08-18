@@ -56,6 +56,13 @@ async def startup():
     logger.info("signal_ready")
 
 
+@app.get("/ping")
+@app.get("/api/health")
+async def ping():
+    """Lightweight 200 OK ping endpoint for UptimeRobot monitoring."""
+    return {"status": "ok", "service": "signal-agent", "uptime_check": True}
+
+
 @app.get("/health")
 async def health():
     cfg = get_config()

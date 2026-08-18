@@ -179,7 +179,7 @@ html, body, #root {
 .spec-grid {
   display: grid;
   grid-template-columns: 160px 1fr;
-  gap: 4px 12px;
+  gap: 6px 12px;
   font-family: var(--font-mono);
   font-size: 11px;
   background: var(--ink);
@@ -187,7 +187,10 @@ html, body, #root {
   border-left: 2px solid var(--signal);
   border-radius: 3px;
   padding: 10px 12px;
-  overflow: hidden;
+  max-height: 260px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--grid) transparent;
 }
 
 .spec-grid dt {
