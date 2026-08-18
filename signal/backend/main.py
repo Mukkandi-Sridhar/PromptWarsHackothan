@@ -56,7 +56,7 @@ async def _async_probe_bg():
 @app.on_event("startup")
 async def startup():
     cfg = get_config()
-    logger.info("signal_starting", key_prefix=repr(cfg.OPENAI_API_KEY)[:14], provider=cfg.LLM_PROVIDER)
+    logger.info("signal_starting", key_present=bool(cfg.OPENAI_API_KEY), provider=cfg.LLM_PROVIDER)
     await seed_db()
 
     # Run OpenAI probe in background so startup returns instantly and Uvicorn binds $PORT immediately
