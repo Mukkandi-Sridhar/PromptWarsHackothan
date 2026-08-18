@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '../store';
 import { recordInteraction } from '../api';
@@ -44,6 +45,28 @@ export default function PhoneFeed() {
       setCurrentReelIdx(nextIdx);
     }
   };
+
+  // Keyboard navigation: ArrowDown / ArrowUp for feed advance, L for like, S for save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        goTo(1);
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goTo(-1);
+      } else if (e.key.toLowerCase() === 'l') {
+        e.preventDefault();
+        handleAction('liked');
+      } else if (e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handleAction('saved');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentReelIdx, reels.length, myInteraction]);
 
   return (
     <div

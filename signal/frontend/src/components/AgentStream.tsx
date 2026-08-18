@@ -8,6 +8,9 @@ export default function AgentStream() {
     <div
       id="agent-stream-panel"
       className="panel"
+      role="region"
+      aria-labelledby="agent-stream-heading"
+      aria-live="polite"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -22,7 +25,7 @@ export default function AgentStream() {
     >
       {/* Panel Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-        <span className="panel-heading">
+        <span id="agent-stream-heading" className="panel-heading">
           Agent Stream
         </span>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>

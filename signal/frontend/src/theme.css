@@ -10,7 +10,7 @@
   --chip-hot:   #21505E;   /* active/converged chip fill */
   --grid:       #1C3F4A;   /* panel borders ONLY */
   --bone:       #E9E6DF;   /* primary text */
-  --bone-dim:   #7C959C;   /* secondary text */
+  --bone-dim:   #94B3BC;   /* secondary text — WCAG AA compliant */
   --signal:     #FFB020;   /* amber — 3 places max */
   --probe:      #4FD1D9;   /* cyan — 2 places max */
   --reject:     #FF6B5A;   /* coral — rejections only */
@@ -35,6 +35,11 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--signal) !important;
+  outline-offset: 2px !important;
 }
 
 html, body, #root {

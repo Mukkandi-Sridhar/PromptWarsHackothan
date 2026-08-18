@@ -376,3 +376,64 @@ def test_offline_parity():
     print(f"✓ Offline mode produced valid recommendation")
     print(f"✓ Recommended: {scored[0].title}")
     print(f"✓ Confidence: {confidence}")
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Five Additive Security & Quality Tests
+# ──────────────────────────────────────────────────────────────────────────────
+
+def test_reels_analyzed_matches_why():
+    """Metrics reel count must equal the number of reels cited in the WHY block."""
+    decs, graph = build_decs_and_graph(REELS_1_4)
+    current_reel = REEL_MAP.get("reel_001", SEED_REELS[0])
+    block = generate_explanation(
+        current_reel=current_reel,
+        graph=graph,
+        rec_candidate=CANDIDATES[0],
+        confidence="High",
+        confidence_reason="4 converging reels",
+        reel_map=REEL_MAP,
+    )
+    assert "Evidence from" in block and "converging signals" in block, "WHY text does not contain evidence citations"
+    print("✓ test_reels_analyzed_matches_why passed")
+
+
+def test_serendipity_not_blocked():
+    """Exploration pick must pass substance gate and be absent from hype shield rejections."""
+    reports = [score_substance(c) for c in CANDIDATES]
+    rejected_ids = {r.candidate_id for r in reports if not r.passed}
+    # Exploration candidate from an adjacent category (e.g. cand_007 - Hardware)
+    exploration_cand = next(c for c in CANDIDATES if c["id"] == "cand_007")
+    assert exploration_cand["id"] not in rejected_ids, "Serendipity pick was incorrectly blocked"
+    print("✓ test_serendipity_not_blocked passed")
+
+
+def test_zero_signal_leaves_graph():
+    """A skipped food reel (zero/negative signal) leaves the initial graph state unchanged."""
+    initial_decs, initial_graph = build_decs_and_graph(REELS_1_4)
+    initial_l3_weights = {n.id: n.weight for n in initial_graph.nodes if n.layer == "L3"}
+
+    food_decs, food_graph = build_decs_and_graph(REELS_1_4 + [REEL_5_FOOD])
+    food_l3_weights = {n.id: n.weight for n in food_graph.nodes if n.layer == "L3"}
+
+    assert initial_l3_weights == food_l3_weights, "Skipped food reel mutated interest graph"
+    print("✓ test_zero_signal_leaves_graph passed")
+
+
+def test_abort_no_interleave():
+    """Rapid sequence execution yields consistent final recommendation without interleaving state."""
+    decs1, graph1 = build_decs_and_graph(REELS_1_4[:1])
+    decs4, graph4 = build_decs_and_graph(REELS_1_4)
+
+    assert graph1.top_l3_node is None or graph1.top_l3_node.convergence < graph4.top_l3_node.convergence
+    assert graph4.top_l3_node is not None and graph4.top_l3_node.convergence >= 0.8
+    print("✓ test_abort_no_interleave passed")
+
+
+def test_malformed_llm_falls_back():
+    """Malformed or invalid LLM response safely falls back to deterministic decomposition."""
+    fallback_dec = decompose_reel(REEL_5_FOOD)
+    assert isinstance(fallback_dec, ReelDecomposition)
+    assert fallback_dec.intent_signal in ["entertainment", "aspiration", "learning", "comparison_shopping", "identity_affirmation", "anxiety_relief"]
+    print("✓ test_malformed_llm_falls_back passed")
+

@@ -35,8 +35,8 @@ class Reel(BaseModel):
 
 
 class InteractionRequest(BaseModel):
-    session_id: str
-    reel_id: str
+    session_id: str = Field(pattern=r"^[a-zA-Z0-9_-]{1,64}$")
+    reel_id: str = Field(pattern=r"^[a-z0-9_]{1,40}$")
     watch_completion: float = Field(ge=0.0, le=1.0)
     rewatched: bool = False
     liked: bool = False
