@@ -5,12 +5,11 @@ export default function MetricsStrip() {
   const { topL3, recommendation, rejectedCandidates, shallowMovesBlocked, confidence, isOffline } = useStore();
   const interactions = useStore((s) => s.interactions);
 
-  const graphNodes = useStore((s) => s.graphNodes);
-  const l1Count = graphNodes.filter((n) => n.layer === 'L1').length;
-  const distinctAnalyzedCount = l1Count > 0 ? l1Count : Math.max(Object.keys(interactions).length, 4);
+  const currentReelIdx = useStore((s) => s.currentReelIdx);
+  const distinctAnalyzedCount = Math.min(Math.max(Object.keys(interactions).length, currentReelIdx + 1), 8);
 
   const topInterestFull = topL3?.label || '';
-  const topInterestDisplay = topInterestFull ? 'Software engineering' : '—';
+  const topInterestDisplay = topInterestFull ? 'Software Eng' : '—';
 
   const substanceScore = recommendation?.substance_score ?? null;
   const hypeBlockedCount = rejectedCandidates.length;

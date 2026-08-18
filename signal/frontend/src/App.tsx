@@ -82,7 +82,7 @@ export default function App() {
     resetStages();
 
     const dwellMs = getDwellMs();
-
+    const activeReelId = reels[currentReelIdx]?.id;
     const cleanup = createSSEStream(
       sessionId,
       mode,
@@ -172,6 +172,7 @@ export default function App() {
         setServerError(err);
         cleanupRef.current = null;
       },
+      activeReelId,
     );
 
     cleanupRef.current = cleanup;

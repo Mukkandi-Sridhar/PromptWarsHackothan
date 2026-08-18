@@ -1,6 +1,15 @@
 import { useStore } from '../store';
 import type { SubstanceReport } from '../store';
 
+const TOKEN_TITLE_MAP: Record<string, string> = {
+  java: 'Java streams in 60 seconds',
+  nullpointerexception: 'Fixing NullPointerExceptions in Spring',
+  meme: '10 Java Memes Only Senior Devs Understand',
+  debugging: 'Debugging Async Java Applications',
+  programming: 'Learn Object Oriented Programming in 1 Minute',
+  software_engineering: 'How to Become a Senior Engineer in 2026',
+};
+
 export default function HypeShield() {
   const { rejectedCandidates, passedCount, shallowMovesBlocked } = useStore();
 
@@ -39,7 +48,7 @@ export default function HypeShield() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {/* Section 1: Hype Rejections (Renders FIRST, Spec 2.1) */}
+        {/* Section 1: Hype Rejections */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span className="panel-heading" style={{ fontSize: 10, color: 'var(--bone-dim)' }}>
@@ -63,7 +72,7 @@ export default function HypeShield() {
           )}
         </div>
 
-        {/* Section 2: Surface Echo Block (Part 2.1) */}
+        {/* Section 2: Surface Echo Block */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span className="panel-heading" style={{ fontSize: 10, color: 'var(--bone-dim)' }}>
@@ -81,13 +90,18 @@ export default function HypeShield() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {shallowMovesBlocked.map((item: any, idx: number) => {
-                // Parse reel title and reason cleanly (no internal debug keys)
-                const title = typeof item === 'string'
-                  ? item.replace(/^shallow_move_blocked:l1_/, '').replace(/_/g, ' ')
-                  : item.candidate || item.title || 'Surface echo reel';
-                const reason = typeof item === 'string'
-                  ? 'same topic, no step up in difficulty'
-                  : item.reason || 'same topic, no transferable concept';
+                let tokenKey = '';
+                let title = '';
+                let reason = 'same surface topic, no step up in difficulty';
+
+                if (typeof item === 'string') {
+                  tokenKey = item.replace(/^shallow_move_blocked:l1_/, '').toLowerCase();
+                  title = TOKEN_TITLE_MAP[tokenKey] || `${tokenKey.toUpperCase()} meme candidate`;
+                  reason = `same surface topic '${tokenKey}' · no step up in difficulty`;
+                } else {
+                  title = item.candidate || item.title || 'Surface echo reel';
+                  reason = item.reason || 'same surface topic, no step up in difficulty';
+                }
 
                 return (
                   <div
