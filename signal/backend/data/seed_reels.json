@@ -1,0 +1,154 @@
+[
+  {
+    "id": "reel_001",
+    "title": "NullPointerException hits different at 2am",
+    "caption": "When Java decides your entire project is null 💀 #java #coding #programmer",
+    "transcript_excerpt": "So you're running your first real project, everything compiles, you hit run... and then Java just goes 'Exception in thread main java.lang.NullPointerException at line 47.' You didn't ask for this. Nobody asked for this.",
+    "creator_handle": "@devmemes.daily",
+    "duration_sec": 14,
+    "tags": ["java", "nullpointerexception", "meme", "programming", "debugging"],
+    "thumbnail_gradient": ["#1a1a2e", "#16213e"],
+    "engagement": {
+      "watch_completion": 1.0,
+      "rewatched": true,
+      "liked": true,
+      "saved": false,
+      "shared": false,
+      "commented": false,
+      "skipped_at_sec": null
+    }
+  },
+  {
+    "id": "reel_002",
+    "title": "A day in the life of a SWE in Bengaluru",
+    "caption": "9am standup to 6pm deploy — what I actually do 🏙️ #swife #bengaluru #techjobs",
+    "transcript_excerpt": "I get into office around nine thirty, grab coffee, and the first thing I do is check if anything broke in prod overnight. By noon I'm deep in code review. The afternoon is usually design discussions or pair programming. People think we just type all day — there's a lot more talking than you'd expect.",
+    "creator_handle": "@priya.codes",
+    "duration_sec": 58,
+    "tags": ["software-engineer", "day-in-life", "bengaluru", "tech-career", "work-culture"],
+    "thumbnail_gradient": ["#0f2027", "#203a43"],
+    "engagement": {
+      "watch_completion": 0.91,
+      "rewatched": false,
+      "liked": false,
+      "saved": true,
+      "shared": false,
+      "commented": false,
+      "skipped_at_sec": null
+    }
+  },
+  {
+    "id": "reel_003",
+    "title": "POV: interviewer asks you to reverse a linked list",
+    "caption": "The panic is real 😭 #leetcode #codinginterview #dsa #swe",
+    "transcript_excerpt": "Interviewer: 'Can you reverse a linked list?' Me, who just watched three YouTube tutorials on it: 'Absolutely.' Me, five seconds into the whiteboard: ... okay so we have... a node... and it has a next... and we want... the next to be the previous... wait.",
+    "creator_handle": "@leetgrind.memes",
+    "duration_sec": 22,
+    "tags": ["linked-list", "coding-interview", "dsa", "leetcode", "humor"],
+    "thumbnail_gradient": ["#1a1a2e", "#2d1b69"],
+    "engagement": {
+      "watch_completion": 1.0,
+      "rewatched": false,
+      "liked": false,
+      "saved": false,
+      "shared": true,
+      "commented": false,
+      "skipped_at_sec": null
+    }
+  },
+  {
+    "id": "reel_004",
+    "title": "16GB vs 8GB MacBook — is the upgrade worth it for devs?",
+    "caption": "I bought both so you don't have to. Real dev workloads tested 💻 #macbook #developer #laptop",
+    "transcript_excerpt": "Running IntelliJ, a local Postgres, and Chrome with twenty tabs — the 8GB model starts swapping at about seventy percent memory utilization. The 16GB handles it comfortably. If you're doing anything with Docker containers, the 8GB is going to hurt. For frontend-only work, honestly? 8GB is probably fine.",
+    "creator_handle": "@techreview.dev",
+    "duration_sec": 74,
+    "tags": ["macbook", "laptop", "developer-tools", "hardware", "m4"],
+    "thumbnail_gradient": ["#2c3e50", "#3498db"],
+    "engagement": {
+      "watch_completion": 0.88,
+      "rewatched": true,
+      "liked": false,
+      "saved": false,
+      "shared": false,
+      "commented": false,
+      "skipped_at_sec": null
+    }
+  },
+  {
+    "id": "reel_005",
+    "title": "Paneer tikka street cart — old Delhi",
+    "caption": "The OG street food experience 🔥 #streetfood #delhi #foodie",
+    "transcript_excerpt": "This guy has been running this cart for thirty years. The marinade is his grandmother's recipe. Watch how fast he works the skewer.",
+    "creator_handle": "@streetfoodwala",
+    "duration_sec": 31,
+    "tags": ["street-food", "delhi", "food", "paneer"],
+    "thumbnail_gradient": ["#f39c12", "#e74c3c"],
+    "engagement": {
+      "watch_completion": 0.13,
+      "rewatched": false,
+      "liked": false,
+      "saved": false,
+      "shared": false,
+      "commented": false,
+      "skipped_at_sec": 4
+    }
+  },
+  {
+    "id": "reel_006",
+    "title": "1v4 clutch with 2HP left — insane mobile finish",
+    "caption": "How did I survive this 💀 #bgmi #mobilegaming #gaming #clutch",
+    "transcript_excerpt": "Down to 2HP, three enemies pushing from the east, one more flanking from the warehouse. This is either genius or I'm about to embarrass myself on camera.",
+    "creator_handle": "@clutchking.bgmi",
+    "duration_sec": 27,
+    "tags": ["gaming", "mobile-gaming", "bgmi", "clutch"],
+    "thumbnail_gradient": ["#1a1a2e", "#4a0080"],
+    "engagement": {
+      "watch_completion": 0.60,
+      "rewatched": false,
+      "liked": true,
+      "saved": false,
+      "shared": false,
+      "commented": false,
+      "skipped_at_sec": null
+    }
+  },
+  {
+    "id": "reel_007",
+    "title": "Snapdragon X Elite just changed mobile compute",
+    "caption": "The benchmark numbers are wild 📊 #snapdragon #chips #tech #hardware",
+    "transcript_excerpt": "Qualcomm's new X Elite pulls 13 TOPS on the neural processing unit. For context, last generation was pushing 4. That's not incremental — that's a platform shift. The implications for on-device inference are significant.",
+    "creator_handle": "@chipanalyst",
+    "duration_sec": 40,
+    "tags": ["snapdragon", "chip", "hardware", "npu", "compute"],
+    "thumbnail_gradient": ["#0d1117", "#1f6feb"],
+    "engagement": {
+      "watch_completion": 0.70,
+      "rewatched": false,
+      "liked": false,
+      "saved": false,
+      "shared": false,
+      "commented": false,
+      "skipped_at_sec": null
+    }
+  },
+  {
+    "id": "reel_008",
+    "title": "Stop wasting time. Grind now. Your future depends on it.",
+    "caption": "No excuses. Just results. 💪 #motivation #grind #success",
+    "transcript_excerpt": "Every minute you spend scrolling is a minute your competitor is grinding. Champions aren't born. They're forged in the hours you refuse to give up. Are you willing to pay the price?",
+    "creator_handle": "@alphagrind.official",
+    "duration_sec": 19,
+    "tags": ["motivation", "grind", "hustle", "mindset"],
+    "thumbnail_gradient": ["#0f0f0f", "#1a1a1a"],
+    "engagement": {
+      "watch_completion": 0.45,
+      "rewatched": false,
+      "liked": false,
+      "saved": false,
+      "shared": false,
+      "commented": false,
+      "skipped_at_sec": null
+    }
+  }
+]

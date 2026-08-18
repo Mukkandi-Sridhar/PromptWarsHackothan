@@ -1,0 +1,205 @@
+/* ──────────────────────────────────────────────
+   SIGNAL Design Tokens & Motion Tokens (Pass 2 + Motion Pass)
+   ────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --ink:        #071319;   /* page background */
+  --ink-raise:  #0E2129;   /* panel fill */
+  --chip:       #17303A;   /* default chip fill */
+  --chip-hot:   #21505E;   /* active/converged chip fill */
+  --grid:       #1C3F4A;   /* panel borders ONLY */
+  --bone:       #E9E6DF;   /* primary text */
+  --bone-dim:   #7C959C;   /* secondary text */
+  --signal:     #FFB020;   /* amber — 3 places max */
+  --probe:      #4FD1D9;   /* cyan — 2 places max */
+  --reject:     #FF6B5A;   /* coral — rejections only */
+
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body:    'Inter', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  /* Motion Tokens per Spec Part 1 */
+  --dur-instant: 90ms;    /* press feedback */
+  --dur-quick:   180ms;   /* hover, chip state change */
+  --dur-base:    280ms;   /* panel content swap */
+  --dur-slow:    520ms;   /* tier transitions, node locks */
+  --dur-story:  1800ms;   /* full ladder climb, orchestrated */
+
+  --ease-out:    cubic-bezier(.22, 1, .36, 1);     /* entrances */
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);     /* position changes */
+  --ease-exit:   cubic-bezier(.4, 0, 1, 1);        /* removals */
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--bone);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollable panels */
+.scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--grid) transparent;
+}
+
+.scroll::-webkit-scrollbar { width: 6px; }
+.scroll::-webkit-scrollbar-thumb { background: var(--grid); border-radius: 3px; }
+.panel::-webkit-scrollbar { width: 6px; }
+.panel::-webkit-scrollbar-thumb { background: var(--grid); border-radius: 3px; }
+
+/* Panel Base: ONLY panels get borders & radius 6px per Spec 3.1 */
+.panel {
+  background: var(--ink-raise);
+  border: 1px solid var(--grid);
+  border-radius: 6px;
+  padding: 16px;
+  overflow: hidden;
+  min-height: 0;
+  transition: border-color var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);
+}
+
+/* Stage-Scoped Attention (Part 4) */
+.panel-active-attention {
+  border-color: #327285 !important;
+  box-shadow: 0 0 12px rgba(79, 209, 217, 0.12);
+}
+
+/* Panel Heading: JetBrains Mono 11px uppercase letter-spacing 0.08em */
+.panel-heading {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--bone-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Chips: radius 3px, NO border per Spec 3.1 & Micro-interactions (Part 5) */
+.chip {
+  background: var(--chip);
+  border: 0;
+  border-radius: 3px;
+  padding: 5px 9px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--bone);
+  transition: transform var(--dur-quick) var(--ease-out), background-color var(--dur-quick) var(--ease-out);
+  cursor: default;
+}
+
+.chip:hover {
+  transform: translateY(-1px);
+  background: #1e3c49;
+}
+
+.chip-hot {
+  background: var(--chip-hot);
+  border: 0;
+  border-left: 2px solid var(--probe);
+  border-radius: 3px;
+  padding: 5px 9px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--bone);
+  transition: transform var(--dur-quick) var(--ease-out), background-color var(--dur-quick) var(--ease-out);
+}
+
+.chip-hot:hover {
+  transform: translateY(-1px);
+}
+
+.tag-chip {
+  background: var(--chip);
+  border: 0;
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--bone-dim);
+}
+
+/* Typography scale per Spec 3.3 & Pass 4 */
+.title-rec { font-family: var(--font-display); font-weight: 600; font-size: 26px; letter-spacing: -0.02em; line-height: 1.15; color: var(--signal); }
+.title-l3  { font-family: var(--font-display); font-weight: 600; font-size: 18px; line-height: 1.25; color: var(--bone); }
+
+/* Required Spec Output Grid per Spec 3.4 */
+.spec-grid {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 6px 16px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: var(--ink);
+  border: 1px solid var(--grid);
+  border-left: 2px solid var(--signal);
+  border-radius: 3px;
+  padding: 12px 16px;
+}
+
+.spec-grid dt {
+  color: var(--bone-dim);
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+.spec-grid dd {
+  color: var(--bone);
+  font-weight: 500;
+  word-break: break-word;
+}
+
+/* Caret for WHY typing animation (Part 3 S7) */
+.typing-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background-color: var(--signal);
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: blink-caret 530ms infinite;
+}
+
+@keyframes blink-caret {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Loop circuit line for Shallow mode (Part 6) */
+.shallow-loop-circuit {
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--reject), transparent);
+  background-size: 200% 100%;
+  animation: loop-circuit 1.2s linear infinite;
+  border-radius: 1px;
+}
+
+@keyframes loop-circuit {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Reduced motion rules (Part 1) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: var(--dur-quick) !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: var(--dur-quick) !important;
+    scroll-behavior: auto !important;
+  }
+}
