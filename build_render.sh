@@ -2,7 +2,7 @@
 set -e
 
 echo "=== SIGNAL Render Single-Service Build ==="
-pip install -r signal/backend/requirements.txt
+pip install --retries 5 --timeout 60 -r signal/backend/requirements.txt
 
 echo "=== Building React Frontend Asset Bundle ==="
 export NODE_VERSION=${NODE_VERSION:-20.18.0}
