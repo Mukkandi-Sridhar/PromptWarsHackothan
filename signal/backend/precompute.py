@@ -51,7 +51,7 @@ async def precompute_all(seed_reels: list[dict[str, Any]], candidates: list[dict
 
 
 if __name__ == "__main__":
-    from backend.seed import SEED_REELS
+    from backend.seed import load_seed_reels
     from backend.db import init_db
     import json
     from pathlib import Path
@@ -60,6 +60,7 @@ if __name__ == "__main__":
         await init_db()
         cands_path = Path(__file__).parent / "data" / "candidate_library.json"
         cands = json.loads(cands_path.read_text()) if cands_path.exists() else []
-        await precompute_all(SEED_REELS, cands)
+        reels = load_seed_reels()
+        await precompute_all(reels, cands)
 
     asyncio.run(main())

@@ -1,13 +1,32 @@
-"""Stage 3 — Candidate Retrieval via composed query vector"""
+"""Stage 3 — Candidate Retrieval via composed query vector using numpy cosine matrix search"""
 from __future__ import annotations
+import json
+from pathlib import Path
 from typing import Any
-
+import numpy as np
 import structlog
 
 from backend.schemas import InterestGraph
-from backend.config import get_config
 
 logger = structlog.get_logger()
+
+# Load precomputed vectors locally
+VECTORS_PATH = Path(__file__).parent.parent / "data" / "vectors.json"
+VECTORS_DATA: dict[str, Any] = {}
+if VECTORS_PATH.exists():
+    try:
+        VECTORS_DATA = json.loads(VECTORS_PATH.read_text())
+    except Exception as e:
+        logger.warning("vectors_load_failed", error=str(e))
+
+CAND_IDS = list(VECTORS_DATA.get("candidates", {}).keys())
+CAND_MAT = np.array([VECTORS_DATA["candidates"][i] for i in CAND_IDS], dtype=np.float32) if CAND_IDS else np.empty((0, 384), dtype=np.float32)
+if CAND_MAT.shape[0] > 0:
+    norms = np.linalg.norm(CAND_MAT, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0
+    CAND_MAT /= norms
+
+NODES = {k: np.array(v, dtype=np.float32) for k, v in VECTORS_DATA.get("nodes", {}).items()}
 
 
 def run(
@@ -16,84 +35,38 @@ def run(
     chroma_collection: Any | None = None,
 ) -> tuple[list[dict[str, Any]], list[str]]:
     """
-    Returns (candidates, composed_query_terms).
+    Retrieves top 35 candidates via numpy matrix cosine search over composed interest graph vector.
     """
-    cfg = get_config()
-
     composed_terms: list[str] = []
     if graph.top_l2_nodes:
         composed_terms = [n.label for n in graph.top_l2_nodes]
     if graph.top_l3_node:
         composed_terms.append(f"[L3] {graph.top_l3_node.label}")
 
-    # Try Chroma retrieval if available
-    if chroma_collection is not None:
+    cand_map = {c["id"]: c for c in candidate_library}
+
+    if CAND_MAT.shape[0] > 0 and (graph.top_l2_nodes or graph.top_l3_node):
         try:
-            candidates = _chroma_retrieve(graph, chroma_collection, max(cfg.RETRIEVAL_TOP_K, 35))
-            if candidates and len(candidates) >= 20:
-                return candidates, composed_terms
+            # Build composed query vector
+            q_vec = np.zeros(384, dtype=np.float32)
+            for node in graph.top_l2_nodes:
+                if node.label in NODES:
+                    q_vec += (node.weight or 1.0) * NODES[node.label]
+            if graph.top_l3_node and graph.top_l3_node.label in NODES:
+                q_vec += 0.25 * NODES[graph.top_l3_node.label]
+
+            q_norm = np.linalg.norm(q_vec)
+            if q_norm > 0:
+                q_vec /= q_norm
+                scores = CAND_MAT @ q_vec
+                top_indices = np.argsort(-scores)[:35]
+                retrieved_ids = [CAND_IDS[i] for i in top_indices]
+                candidates = [cand_map[cid] for cid in retrieved_ids if cid in cand_map]
+                if len(candidates) >= 20:
+                    return candidates, composed_terms
         except Exception as e:
-            logger.warning("chroma_retrieve_failed", error=str(e))
+            logger.warning("numpy_vector_retrieve_failed", error=str(e))
 
-    # Fallback: deterministic retrieval surfacing relevant domains + planted hype candidates
-    candidates = _deterministic_retrieve(graph, candidate_library)
+    # Fallback to broad library slice
+    candidates = candidate_library[:35] if candidate_library else []
     return candidates, composed_terms
-
-
-def _chroma_retrieve(
-    graph: InterestGraph,
-    collection: Any,
-    top_k: int,
-) -> list[dict[str, Any]]:
-    """Retrieve using composed query vector from Chroma."""
-    try:
-        from sentence_transformers import SentenceTransformer
-        model = SentenceTransformer("all-MiniLM-L6-v2")
-
-        l2_text = " ".join(n.label for n in graph.top_l2_nodes[:3])
-        l3_text = graph.top_l3_node.label if graph.top_l3_node else ""
-        query_text = f"{l2_text} {l3_text}".strip()
-
-        if not query_text:
-            return []
-
-        query_embedding = model.encode([query_text])[0].tolist()
-
-        results = collection.query(
-            query_embeddings=[query_embedding],
-            n_results=min(top_k, collection.count()),
-        )
-
-        candidates = []
-        if results and results.get("metadatas"):
-            for meta in results["metadatas"][0]:
-                if meta:
-                    candidates.append(dict(meta))
-        return candidates
-    except Exception as e:
-        logger.warning("chroma_query_error", error=str(e))
-        return []
-
-
-def _deterministic_retrieve(
-    graph: InterestGraph,
-    library: list[dict[str, Any]],
-) -> list[dict[str, Any]]:
-    """Broad retrieval matching top L2 domains while guaranteeing planted hype reels surface for substance evaluation."""
-    from backend.llm.deterministic import CATEGORY_TO_L2
-
-    top_l2_keys = {n.id.replace("l2_", "") for n in graph.top_l2_nodes}
-    target_categories: set[str] = set()
-    for l2_key in top_l2_keys:
-        for cat, key in CATEGORY_TO_L2.items():
-            if key == l2_key:
-                target_categories.add(cat)
-
-    # Broaden categories so planted hype reels surface
-    target_categories.update({"Java", "DSA", "Career", "Hardware", "AI", "HLD", "Cybersecurity"})
-
-    candidates = [c for c in library if c.get("category") in target_categories or c.get("substance_score", 50) < 60]
-    if len(candidates) < 30:
-        candidates = library[:]
-
-    return candidates[:35]

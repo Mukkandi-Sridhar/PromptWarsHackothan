@@ -18,6 +18,14 @@ DATA_DIR = Path(__file__).parent / "data"
 CHROMA_PATH = DATA_DIR / "chroma"
 
 
+def load_seed_reels() -> list[dict[str, Any]]:
+    seed_path = DATA_DIR / "seed_reels.json"
+    if seed_path.exists():
+        with open(seed_path) as f:
+            return json.load(f)
+    return []
+
+
 async def seed_db() -> None:
     await init_db()
 

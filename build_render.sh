@@ -11,9 +11,4 @@ npm install
 npm run build
 cd ../..
 
-echo "=== Precomputing Seed Reels & Candidates ==="
-cd signal
-python -m backend.precompute || true
-cd ..
-
 echo "=== Render Build Complete ==="
