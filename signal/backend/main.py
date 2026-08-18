@@ -1,6 +1,9 @@
+import os
+from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import structlog
 
 from backend.db import init_db
@@ -32,7 +35,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=500,
         content={"error": type(exc).__name__, "detail": str(exc)},
-        headers={"Access-Control-Allow-Origin": "http://localhost:5173"},
+        headers={"Access-Control-Allow-Origin": "*"},
     )
 
 
@@ -64,3 +67,14 @@ async def health():
         "detail": detail,
         "mode": "gpt" if ok else f"offline · {detail}",
     }
+
+# Single-Service Static Mount for Render & Production Deployments
+DIST_PATHS = [
+    Path(__file__).parent.parent / "frontend" / "dist",
+    Path(__file__).parent / "static",
+]
+for dist_path in DIST_PATHS:
+    if dist_path.exists() and dist_path.is_dir():
+        logger.info("mounting_static_frontend", path=str(dist_path))
+        app.mount("/", StaticFiles(directory=str(dist_path), html=True), name="static_frontend")
+        break

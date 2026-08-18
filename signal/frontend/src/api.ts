@@ -1,4 +1,6 @@
-const API = 'http://localhost:8000/api';
+const API = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:8000/api'
+  : '/api';
 
 export async function startSession(): Promise<string> {
   const res = await fetch(`${API}/session/start`, { method: 'POST' });

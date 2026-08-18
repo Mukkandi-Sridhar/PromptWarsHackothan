@@ -141,3 +141,47 @@ python -m pytest backend/tests/test_agent.py -v
 - **Zero-Border Discipline**: Containers only get borders. All chips, pills, and nodes use filled backgrounds with 0 borders.
 - **Typography Hierarchy**: Space Grotesk 26px for recommendation titles, Inter for body/chips, JetBrains Mono for output grid and execution logs.
 - **Motion Layer**: Real SSE-driven pacing (0 spinners), candidate stream overlay, word-by-word reveal, and character typing caret.
+
+---
+
+## 📁 7. Repository Structure
+
+```
+PromptWarsHackothan/
+├── render.yaml               # Render 1-Click Deployment Blueprint
+├── build_render.sh           # Single-command build script for Render
+├── .gitignore
+├── README.md
+└── signal/
+    ├── run.sh                # Local 1-command startup script
+    ├── backend/
+    │   ├── main.py           # FastAPI app & static file mount
+    │   ├── db.py             # SQLite WAL connection
+    │   ├── config.py         # Config & environment settings
+    │   ├── precompute.py     # Batched precomputation script
+    │   ├── agent/            # S1-S7 Pipeline Stages
+    │   │   ├── s1_decompose.py
+    │   │   ├── s2_interest_graph.py
+    │   │   ├── s3_retrieve.py
+    │   │   ├── s4_substance_gate.py
+    │   │   ├── s5_fit_rank.py
+    │   │   ├── s6_calibrate.py
+    │   │   └── s7_explain.py
+    │   ├── llm/              # AsyncOpenAI client & fallback
+    │   └── tests/            # Pytest test suite
+    └── frontend/
+        ├── index.html
+        ├── package.json
+        ├── vite.config.ts
+        └── src/
+            ├── App.tsx       # Main Shell & Choreography
+            ├── store.ts      # Zustand Store
+            ├── theme.css     # Design Tokens & Animations
+            └── components/   # PhoneFeed, AbstractionLadder, HypeShield, RecommendationCard, MetricsStrip
+```
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for details.

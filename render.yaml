@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: signal-agent
+    env: python
+    buildCommand: |
+      pip install -r signal/backend/requirements.txt
+      cd signal/frontend && npm install && npm run build
+    startCommand: |
+      cd signal && uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
+      - key: NODE_VERSION
+        value: 20.10.0
+      - key: LLM_PROVIDER
+        value: openai
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: OPENAI_MODEL_STRONG
+        value: gpt-4o
