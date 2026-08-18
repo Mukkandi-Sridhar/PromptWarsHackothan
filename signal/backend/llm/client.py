@@ -35,6 +35,8 @@ def _prepare_json_schema(schema: Type[BaseModel]) -> dict[str, Any]:
         if isinstance(d, dict):
             if d.get("type") == "object" or "properties" in d:
                 d["additionalProperties"] = False
+                if "properties" in d:
+                    d["required"] = list(d["properties"].keys())
             for v in d.values():
                 _add_no_extra(v)
         elif isinstance(d, list):

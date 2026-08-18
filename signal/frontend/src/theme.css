@@ -1,7 +1,7 @@
 /* ──────────────────────────────────────────────
-   SIGNAL Design Tokens & Motion Tokens (Pass 2 + Motion Pass)
+   SIGNAL Design Tokens, Glassmorphism & Motion Tokens
    ────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
   --ink:        #071319;   /* page background */
@@ -19,7 +19,7 @@
   --font-body:    'Inter', sans-serif;
   --font-mono:    'JetBrains Mono', monospace;
 
-  /* Motion Tokens per Spec Part 1 */
+  /* Motion Tokens */
   --dur-instant: 90ms;    /* press feedback */
   --dur-quick:   180ms;   /* hover, chip state change */
   --dur-base:    280ms;   /* panel content swap */
@@ -39,8 +39,12 @@
 
 html, body, #root {
   height: 100dvh;
+  width: 100vw;
   overflow: hidden;
   background: var(--ink);
+  background-image: 
+    radial-gradient(circle at 10% 10%, rgba(79, 209, 217, 0.04) 0%, transparent 45%),
+    radial-gradient(circle at 90% 90%, rgba(255, 176, 32, 0.04) 0%, transparent 45%);
   color: var(--bone);
   font-family: var(--font-body);
   font-size: 13px;
@@ -48,33 +52,49 @@ html, body, #root {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollable panels */
-.scroll {
-  overflow-y: auto;
+/* Fancy Custom Scrollbars across all scrollable containers */
+.scroll, .panel, ::-webkit-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: var(--grid) transparent;
 }
 
-.scroll::-webkit-scrollbar { width: 6px; }
-.scroll::-webkit-scrollbar-thumb { background: var(--grid); border-radius: 3px; }
-.panel::-webkit-scrollbar { width: 6px; }
-.panel::-webkit-scrollbar-thumb { background: var(--grid); border-radius: 3px; }
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
 
-/* Panel Base: ONLY panels get borders & radius 6px per Spec 3.1 */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--grid);
+  border-radius: 4px;
+  transition: background var(--dur-quick) var(--ease-out);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--probe);
+}
+
+/* Panel Base: ONLY panels get borders & radius 6px */
 .panel {
-  background: var(--ink-raise);
+  background: rgba(14, 33, 41, 0.95);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--grid);
   border-radius: 6px;
-  padding: 16px;
+  padding: 14px;
   overflow: hidden;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
   transition: border-color var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);
 }
 
-/* Stage-Scoped Attention (Part 4) */
+/* Stage-Scoped Attention */
 .panel-active-attention {
   border-color: #327285 !important;
-  box-shadow: 0 0 12px rgba(79, 209, 217, 0.12);
+  box-shadow: 0 0 16px rgba(79, 209, 217, 0.16);
 }
 
 /* Panel Heading: JetBrains Mono 11px uppercase letter-spacing 0.08em */
@@ -87,7 +107,7 @@ html, body, #root {
   letter-spacing: 0.08em;
 }
 
-/* Chips: radius 3px, NO border per Spec 3.1 & Micro-interactions (Part 5) */
+/* Chips: radius 3px, NO border per Spec 3.1 */
 .chip {
   background: var(--chip);
   border: 0;
@@ -131,14 +151,14 @@ html, body, #root {
   color: var(--bone-dim);
 }
 
-/* Typography scale per Spec 3.3 & Pass 4 */
-.title-rec { font-family: var(--font-display); font-weight: 600; font-size: 26px; letter-spacing: -0.02em; line-height: 1.15; color: var(--signal); }
-.title-l3  { font-family: var(--font-display); font-weight: 600; font-size: 18px; line-height: 1.25; color: var(--bone); }
+/* Typography scale */
+.title-rec { font-family: var(--font-display); font-weight: 600; font-size: 24px; letter-spacing: -0.02em; line-height: 1.15; color: var(--signal); }
+.title-l3  { font-family: var(--font-display); font-weight: 600; font-size: 17px; line-height: 1.25; color: var(--bone); }
 
 /* Required Spec Output Grid per Spec 3.4 */
 .spec-grid {
   display: grid;
-  grid-template-columns: 170px 1fr;
+  grid-template-columns: 160px 1fr;
   gap: 4px 12px;
   font-family: var(--font-mono);
   font-size: 11px;
@@ -147,6 +167,7 @@ html, body, #root {
   border-left: 2px solid var(--signal);
   border-radius: 3px;
   padding: 10px 12px;
+  overflow: hidden;
 }
 
 .spec-grid dt {
@@ -164,7 +185,7 @@ html, body, #root {
   line-height: 1.35;
 }
 
-/* Caret for WHY typing animation (Part 3 S7) */
+/* Caret for WHY typing animation */
 .typing-caret {
   display: inline-block;
   width: 2px;
@@ -180,7 +201,7 @@ html, body, #root {
   50% { opacity: 0; }
 }
 
-/* Loop circuit line for Shallow mode (Part 6) */
+/* Loop circuit line for Shallow mode */
 .shallow-loop-circuit {
   width: 100%;
   height: 2px;
@@ -195,7 +216,28 @@ html, body, #root {
   100% { background-position: -200% 0; }
 }
 
-/* Reduced motion rules (Part 1) */
+/* Pulse animation for active signal elements */
+.pulse-signal {
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 4px rgba(255, 176, 32, 0.2); }
+  50% { box-shadow: 0 0 12px rgba(255, 176, 32, 0.5); }
+}
+
+/* Device-responsive fine tuning for low-height screens */
+@media (max-height: 820px) {
+  .title-rec { font-size: 20px; }
+  .panel { padding: 10px; }
+  .spec-grid { grid-template-columns: 140px 1fr; padding: 8px 10px; gap: 3px 8px; }
+}
+
+@media (max-width: 1200px) {
+  .spec-grid { grid-template-columns: 140px 1fr; }
+}
+
+/* Reduced motion rules */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: var(--dur-quick) !important;

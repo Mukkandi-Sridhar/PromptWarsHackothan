@@ -50,19 +50,20 @@ export default function AbstractionLadder() {
       id="abstraction-ladder"
       className="panel"
       style={{
-        height: 300,
+        height: '100%',
+        minHeight: 0,
         display: 'flex',
         flexDirection: 'column',
         position: 'relative',
-        background: 'var(--ink-raise)',
+        background: 'rgba(14, 33, 41, 0.95)',
         border: '1px solid var(--grid)',
         borderRadius: 6,
         padding: 0,
         overflow: 'hidden',
       }}
     >
-      {/* Upper Content Area (Padding 16px) */}
-      <div style={{ flex: 1, padding: 16, display: 'flex', flexDirection: 'column', gap: 12, overflow: 'hidden' }}>
+      {/* Upper Content Area */}
+      <div style={{ flex: 1, padding: 12, display: 'flex', flexDirection: 'column', gap: 8, overflow: 'hidden' }}>
         {/* Panel Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <span className="panel-heading">

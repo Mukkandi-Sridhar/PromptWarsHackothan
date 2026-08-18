@@ -387,7 +387,7 @@ export default function App() {
 
           {/* Top: Abstraction Ladder Panel with Stage Attention Highlight (Part 4) */}
           <div
-            style={{ minHeight: 0, height: 300, flexShrink: 0 }}
+            style={{ minHeight: 0, height: 'clamp(220px, 34vh, 300px)', flexShrink: 0 }}
             className={isLadderActive ? 'panel-active-attention' : ''}
           >
             <AbstractionLadder />

@@ -5,6 +5,7 @@ echo "=== SIGNAL Render Single-Service Build ==="
 pip install -r signal/backend/requirements.txt
 
 echo "=== Building React Frontend Asset Bundle ==="
+export NODE_VERSION=${NODE_VERSION:-20.18.0}
 cd signal/frontend
 npm install
 npm run build

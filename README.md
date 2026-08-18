@@ -70,7 +70,7 @@ This repository is pre-configured to deploy on **Render** as a single web servic
   cd signal && uvicorn backend.main:app --host 0.0.0.0 --port $PORT
   ```
 - **Environment Variables**:
-  - `LLM_PROVIDER`: `openai`
+  - `NODE_VERSION`: `20.18.0`
   - `OPENAI_API_KEY`: `sk-...`
   - `OPENAI_MODEL`: `gpt-4o-mini`
   - `OPENAI_MODEL_STRONG`: `gpt-4o`

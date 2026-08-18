@@ -14,7 +14,7 @@ class SubstanceItem(BaseModel):
     candidate_id: str
     final_score: int
     passed: bool
-    rejection_reason: str | None = None
+    rejection_reason: str = ""
 
 
 class SubstanceBatchReport(BaseModel):

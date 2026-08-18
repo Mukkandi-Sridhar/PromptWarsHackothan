@@ -61,13 +61,15 @@ export default function RecommendationCard() {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 12,
-        background: 'var(--ink-raise)',
+        gap: 10,
+        background: 'rgba(14, 33, 41, 0.95)',
         border: '1px solid var(--grid)',
         borderRadius: 6,
-        padding: 16,
+        padding: 12,
         overflowY: 'auto',
-        opacity: isStreaming ? 0.6 : 1,
+        minHeight: 0,
+        height: '100%',
+        opacity: isStreaming ? 0.7 : 1,
         transition: 'opacity 0.2s ease',
       }}
     >
